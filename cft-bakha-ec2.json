@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "EC2 simple",
+    "Description": "EC2 not simple",
     "Parameters": {
         "SubnetType": {
             "Description": "Choose subnet",
