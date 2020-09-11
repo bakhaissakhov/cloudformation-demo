@@ -1,0 +1,52 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "EC2 simple",
+    "Parameters": {
+        "SubnetType": {
+            "Description": "Choose subnet",
+            "Type": "String",
+            "Default": "PublicSubnet",
+            "AllowedValues": [
+                "PublicSubnet",
+                "PrivateSubnet"
+            ]
+        }
+    },
+    "Mappings": {
+        "SubnetMap": {
+            "us-east-1": {
+                "PublicSubnet": "subnet-0cb5232e474a1cd45",
+                "PrivateSubnet": "subnet-096791a493350a7c5",
+                "LinuxImg": "ami-0c94855ba95c71c99"
+            }
+        }
+    },
+    "Resources": {
+        "myEC2Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "SubnetId": {
+                    "Fn::FindInMap": [
+                        "SubnetMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Ref": "SubnetType"
+                        }
+                    ]
+                },
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "SubnetMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "LinuxImg"
+                    ]
+                },
+                "InstanceType": "t2.micro"
+            }
+        }
+    }
+}
