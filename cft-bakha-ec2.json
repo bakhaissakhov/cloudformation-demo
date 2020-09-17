@@ -1,55 +1,39 @@
-{
-    "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "EC2  simple",
-    "Parameters": {
-        "SubnetType": {
-            "Description": "Choose subnet",
-            "Type": "String",
-            "Default": "PublicSubnet",
-            "AllowedValues": [
-                "PublicSubnet",
-                "PrivateSubnet"
-            ]
-        }
-    },
-    "Mappings": {
-        "SubnetMap": {
-            "us-east-1": {
-                "PublicSubnet": "subnet-08ae6ff9b2a5a8b0c",
-                "PrivateSubnet": "subnet-096791a493350a7c5",
-                "LinuxImg": "ami-0c94855ba95c71c99"
-            }
-        }
-    },
-    "Resources": {
-        "myEC2Instance": {
-            "Type": "AWS::EC2::Instance",
-            "Properties": {
-                "SubnetId": {
-                    "Fn::FindInMap": [
-                        "SubnetMap",
-                        {
-                            "Ref": "AWS::Region"
-                        },
-                        {
-                            "Ref": "SubnetType"
-                        }
-                    ]
-                },
-                "ImageId": {
-                    "Fn::FindInMap": [
-                        "SubnetMap",
-                        {
-                            "Ref": "AWS::Region"
-                        },
-                        "LinuxImg"
-                    ]
-                },
-                "InstanceType": "t2.micro"
-            }
-        }
-    }
-}
+AWSTemplateFormatVersion: 2010-09-09
+Description: "EC2 simple"
+Parameters:
+  SubnetType:
+    Description: Choose subnet
+    Type: String
+    Default: PublicSubnet
+    AllowedValues:
+      - PublicSubnet
+      - PrivateSubnet
 
+Mappings:
+  SubnetMap:
+    us-east-1:
+      PublicSubnet:  subnet-0cb5232e474a1cd45
+      PrivateSubnet: subnet-096791a493350a7c5
+      LinuxImg: ami-0dba2cb6798deb6d8
 
-
+Resources:
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: virginia-kpnew
+      SubnetId: !FindInMap [SubnetMap, !Ref "AWS::Region", !Ref SubnetType ]
+      ImageId: !FindInMap [SubnetMap, !Ref "AWS::Region", LinuxImg ]
+      InstanceType: t2.micro
+      UserData: !Base64 |  
+        #!/bin/bash
+        # Set env vars
+        ANSIBLE_USER_PASSWD=*DevOpsAsCode@YouTube*
+        ANSIBLE_USER=ubuntu
+        # Install python
+        sudo apt update -y
+        sudo apt install python -y
+        # Set password for ubuntu user
+        echo "$ANSIBLE_USER:$ANSIBLE_USER_PASSWD" | /usr/sbin/chpasswd
+        # Enable PasswordAuthentication
+        sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication yes" /etc/ssh/sshd_config
+        sudo service sshd restart
