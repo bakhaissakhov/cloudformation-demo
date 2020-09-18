@@ -1,1 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "EC2 simple"
+Parameters:
+  SubnetType:
+    Description: Choose subnet
+    Type: String
+    Default: PublicSubnet
+    AllowedValues:
+      - PublicSubnet
+      - PrivateSubnet
+
+Mappings:
+  SubnetMap:
+    us-east-1:
+      PublicSubnet:  subnet-0cb5232e474a1cd45
+      PrivateSubnet: subnet-096791a493350a7c5
+      LinuxImg: ami-0dba2cb6798deb6d8
+
+Resources:
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: virginia-kpnew
+      SubnetId: !FindInMap [SubnetMap, !Ref "AWS::Region", !Ref SubnetType ]
+      ImageId: !FindInMap [SubnetMap, !Ref "AWS::Region", LinuxImg ]
+      InstanceType: t2.micro
+      UserData: !Base64 |  
+        #!/bin/bash
+        ## Install Ansible
+        ANSIBLE_USER_PASSWD=*DevOpsAsCode@YouTube*
+        ANSIBLE_USER=ubuntu
+        SERVER=54.152.235.215
+        apt update -y
+        apt install ansible python-pip -y
+        pip2 install boto 
+        echo -e "[webservers] \n$SERVER ansible_user=ubuntu\n" >> /etc/ansible/hosts
+
+        ## Install Jenkins
+        # Install Java.
+        apt install openjdk-8-jdk -y
+        # Add the Jenkins Debian repository.
+        wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
+         sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+        # Install Jenkins.
+        sudo apt update -y
+        sudo apt install jenkins -y
+        ## Use the following command to print the password on your terminal:
+        ## sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+        # Automated ssh-keygen without passphrase stored in Jenkins user's home dir.
+        mkdir /var/lib/jenkins/.ssh
+
+        ssh-keygen -b 2048 -t rsa -f /var/lib/jenkins/.ssh/id_rsa -q -N ""
+        chown -R jenkins:jenkins /var/lib/jenkins/.ssh/
+
+        # Copy ssh key to the target host
+        apt install sshpass -y
+        #sshpass -p "$ANSIBLE_USER_PASSWD" ssh-copy-id -o "StrictHostKeyChecking no" -i /var/lib/jenkins/.ssh/id_rsa.pub $ANSIBLE_USER@$SERVER
+        sshpass -p "$ANSIBLE_USER_PASSWD" ssh-copy-id -o "StrictHostKeyChecking no" $ANSIBLE_USER@$SERVER
+        apt remove sshpass -y
 
